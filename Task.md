@@ -1,6 +1,6 @@
 ## **Project description**
 
-Create a data mart for RFM customer segmentation:
+### Create a data mart for RFM customer segmentation:
 
     Data mart name: dm_rfm_segments
     Data mart location: de.analysis

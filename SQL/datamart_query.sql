@@ -1,15 +1,15 @@
 -- dm_rfm_segments table fill
 
--- truncate table analysis.dm_rfm_segments;
+--truncate table analysis.dm_rfm_segments;
 insert into analysis.dm_rfm_segments
 select trr.user_id, 
 	   trr.recency,
 	   trf.frequency,
 	   trmv.monetary_value
 from analysis.tmp_rfm_recency trr 
-join analysis.tmp_rfm_frequency trf 
+left join analysis.tmp_rfm_frequency trf 
 	on trr.user_id = trf.user_id
-join analysis.tmp_rfm_monetary_value trmv
+left join analysis.tmp_rfm_monetary_value trmv
 	on trmv.user_id = trr.user_id;
 
 

@@ -256,13 +256,14 @@ where tablename = 'dm_rfm_segments';
 -- truncate table analysis.tmp_rfm_recency;
 insert into analysis.tmp_rfm_recency
 with r as (select user_id,
-case 
-	when percent_rank() over (order by day_recency) <= 0.2 then 5 
-	when percent_rank() over (order by day_recency) <= 0.4 then 4
-	when percent_rank() over (order by day_recency) <= 0.6 then 3
-	when percent_rank() over (order by day_recency) <= 0.8 then 2
-	else 1
-end recency
+ntile(5) over (order by day_recency desc) recency
+--case 
+--	when percent_rank() over (order by day_recency) <= 0.2 then 5 
+--	when percent_rank() over (order by day_recency) <= 0.4 then 4
+--	when percent_rank() over (order by day_recency) <= 0.6 then 3
+--	when percent_rank() over (order by day_recency) <= 0.8 then 2
+--	else 1
+--end recency
 from (select user_id,
 	  		 date_part('day', current_timestamp - max(order_ts)) day_recency
       from analysis.orders
@@ -286,13 +287,14 @@ left join r on u.id = r.user_id;
 --truncate table analysis.tmp_rfm_frequency;
 insert into analysis.tmp_rfm_frequency
 with f as (select user_id,
-case 
-	when percent_rank() over (order by total_orders) <= 0.2 then 1
-	when percent_rank() over (order by total_orders) <= 0.4 then 2
-	when percent_rank() over (order by total_orders) <= 0.6 then 3
-	when percent_rank() over (order by total_orders) <= 0.8 then 4
-	else 5
-end frequency
+ntile(5) over (order by total_orders) frequency
+--case 
+--	when percent_rank() over (order by total_orders) <= 0.2 then 1
+--	when percent_rank() over (order by total_orders) <= 0.4 then 2
+--	when percent_rank() over (order by total_orders) <= 0.6 then 3
+--	when percent_rank() over (order by total_orders) <= 0.8 then 4
+--	else 5
+--end frequency
 from (select user_id,
 	  		 count(order_id) total_orders
 	  from analysis.orders
@@ -310,19 +312,21 @@ from u
 left join f on u.id = f.user_id;
 
 
+
 -- tmp_rfm_monetary_value table fill
 
---truncate table analysis.tmp_rfm_monetary_value
+--truncate table analysis.tmp_rfm_monetary_value;
 insert into analysis.tmp_rfm_monetary_value 
 with m as (
 select user_id,
-case 
-	when percent_rank() over (order by total_payment_amount) <= 0.2 then 1
-	when percent_rank() over (order by total_payment_amount) <= 0.4 then 2
-	when percent_rank() over (order by total_payment_amount) <= 0.6 then 3
-	when percent_rank() over (order by total_payment_amount) <= 0.8 then 4
-	else 5
-end monetary_value
+ntile(5) over (order by total_payment_amount) monetary_value
+--case 
+--	when percent_rank() over (order by total_payment_amount) <= 0.2 then 1
+--	when percent_rank() over (order by total_payment_amount) <= 0.4 then 2
+--	when percent_rank() over (order by total_payment_amount) <= 0.6 then 3
+--	when percent_rank() over (order by total_payment_amount) <= 0.8 then 4
+--	else 5
+--end monetary_value
 from (select user_id,
 	   sum(payment) total_payment_amount
 from analysis.orders
@@ -341,18 +345,21 @@ from u
 left join m on u.id = m.user_id;
 
 
+
+
+
 -- dm_rfm_segments table fill
 
--- truncate table analysis.dm_rfm_segments;
+--truncate table analysis.dm_rfm_segments;
 insert into analysis.dm_rfm_segments
 select trr.user_id, 
 	   trr.recency,
 	   trf.frequency,
 	   trmv.monetary_value
 from analysis.tmp_rfm_recency trr 
-join analysis.tmp_rfm_frequency trf 
+left join analysis.tmp_rfm_frequency trf 
 	on trr.user_id = trf.user_id
-join analysis.tmp_rfm_monetary_value trmv
+left join analysis.tmp_rfm_monetary_value trmv
 	on trmv.user_id = trr.user_id;
 
 
@@ -374,7 +381,6 @@ ser_id|recency|frequency|monetary_value|
      7|      4|        2|             2|
      8|      1|        1|             3|
      9|      2|        2|             2|
-
 
 ```
 
